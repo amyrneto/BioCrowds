@@ -25,7 +25,7 @@ namespace Biocrowds.Core
         private float _maxSpeed = 1.5f;
 
         //goal
-        public GameObject Goal;
+        public Transform Goal;
 
         //list with all auxins in his personal space
         private List<Auxin> _auxins = new List<Auxin>();
@@ -72,7 +72,7 @@ namespace Biocrowds.Core
         {
             _navMeshPath = new NavMeshPath();
 
-            _goalPosition = Goal.transform.position;
+            _goalPosition = Goal.position;
             _dirAgentGoal = _goalPosition - transform.position;
 
             //cache world info
@@ -93,7 +93,7 @@ namespace Biocrowds.Core
                 _elapsedTime = 0.0f;
 
                 //calculate agent path
-               bool foundPath = NavMesh.CalculatePath(transform.position, Goal.transform.position, NavMesh.AllAreas, _navMeshPath);
+               bool foundPath = NavMesh.CalculatePath(transform.position, Goal.position, NavMesh.AllAreas, _navMeshPath);
 
                 //update its goal if path is found
                 if (foundPath)
@@ -171,18 +171,22 @@ namespace Biocrowds.Core
         //calculate F (F is part of weight formula)
         float GetF(int pRelationIndex)
         {
-            //distance between auxin´s distance and origin 
-            float Ymodule = Vector3.Distance(_distAuxin[pRelationIndex], Vector3.zero);
-            //distance between goal vector and origin
-            float Xmodule = _dirAgentGoal.normalized.magnitude;
+			//distance between auxin´s distance and origin 
+			//float Ymodule = Vector3.Distance(_distAuxin[pRelationIndex], Vector3.zero);
+			float Ymodule = _distAuxin[pRelationIndex].magnitude;
+			//Debug.Log(Ymodule.ToString() + " : " + _distAuxin[pRelationIndex].magnitude);
+			//distance between goal vector and origin
+			float Xmodule = _dirAgentGoal.normalized.magnitude;
+			//float Xmodule = 1.0f;
+			//float Xmodule = _dirAgentGoal.magnitude;
+			//Debug.Log(Xmodule);
+			float dot = Vector3.Dot(_distAuxin[pRelationIndex], _dirAgentGoal.normalized);
 
-            float dot = Vector3.Dot(_distAuxin[pRelationIndex], _dirAgentGoal.normalized);
-
-            if (Ymodule < 0.00001f)
+			if (Ymodule < 0.00001f)
                 return 0.0f;
 
             //return the formula, defined in thesis
-            return (float)((1.0 / (1.0 + Ymodule)) * (1.0 + ((dot) / (Xmodule * Ymodule))));
+            return (float)((1.0f / (1.0f + Ymodule)) * (1.0f + ((dot) / (Xmodule * Ymodule))));
         }
 
         //calculate speed vector    

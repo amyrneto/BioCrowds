@@ -28,7 +28,7 @@ namespace Biocrowds.Core
         private Terrain _terrain;
 
         [SerializeField]
-        private Transform _goal;
+        private Transform [] _goals;
 
         [SerializeField]
         private Vector2 _dimension = new Vector2(30.0f, 20.0f);
@@ -43,19 +43,19 @@ namespace Biocrowds.Core
 
         //agent prefab
         [SerializeField]
-        private Agent _agentPrefab;
+        private Agent _agentScript;
 
         [SerializeField]
-        private Cell _cellPrefab;
+        private Cell _cellScript;
 
         [SerializeField]
-        private Auxin _auxinPrefab;
+        private Auxin _auxinScript;
 
         [SerializeField]
-        private BoxCollider _obstacleCollider;
+        private BoxCollider [] _obstaclesColliders;
 
-        List<Agent> _agents = new List<Agent>();
-        List<Cell> _cells = new List<Cell>();
+        private List<Agent> _agents = new List<Agent>();
+		private List<Cell> _cells = new List<Cell>();
 
         public List<Cell> Cells
         {
@@ -100,7 +100,7 @@ namespace Biocrowds.Core
                 for (int j = 0; j < _dimension.y / 2; j++) // j + agentRadius * 2
                 {
                     //instantiante a new cell
-                    Cell newCell = Instantiate(_cellPrefab, new Vector3(1.0f + (i * 2.0f), 0.0f, 1.0f + (j * 2.0f)), Quaternion.Euler(90.0f, 0.0f, 0.0f), cellPool);
+                    Cell newCell = Instantiate(_cellScript, new Vector3(1.0f + (i * 2.0f), 0.0f, 1.0f + (j * 2.0f)), Quaternion.Euler(90.0f, 0.0f, 0.0f), cellPool);
 
                     //change its name
                     newCell.name = "Cell [" + i + "][" + j + "]";
@@ -169,7 +169,7 @@ namespace Biocrowds.Core
                     //check if auxin can be created there
                     if (createAuxin)
                     {
-                        Auxin newAuxin = Instantiate(_auxinPrefab, new Vector3(x, 0.0f, z), Quaternion.identity, auxinPool);
+                        Auxin newAuxin = Instantiate(_auxinScript, new Vector3(x, 0.0f, z), Quaternion.identity, auxinPool);
 
                         //change its name
                         newAuxin.name = "Auxin [" + c + "][" + i + "]";
@@ -218,12 +218,13 @@ namespace Biocrowds.Core
             //instantiate agents
             for (int i = 0; i < _maxAgents; i++)
             {
-                Agent newAgent = Instantiate(_agentPrefab, new Vector3(xPos, 0.5f, zPos), Quaternion.identity, agentPool);
+                Agent newAgent = Instantiate(_agentScript, new Vector3(xPos, 0.5f, zPos), Quaternion.identity, agentPool);
 
                 newAgent.name = "Agent [" + i + "]";  //name
                 newAgent.CurrentCell = _cells[i];  //agent cell
                 newAgent.agentRadius = AGENT_RADIUS;  //agent radius
-                newAgent.Goal = _goal.gameObject;  //agent goal
+				int goalIndex = Random.Range(0, _goals.Length - 1);
+                newAgent.Goal = _goals[goalIndex];  //agent goal
                 newAgent.World = this;
 
                 _agents.Add(newAgent);

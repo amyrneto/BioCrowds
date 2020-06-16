@@ -88,6 +88,7 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaDirect: 0.5
     m_PVRFilteringAtrousPositionSigmaIndirect: 2
     m_PVRFilteringAtrousPositionSigmaAO: 1
+    m_ShowResolutionOverlay: 1
   m_LightingDataAsset: {fileID: 0}
   m_UseShadowmask: 1
 --- !u!196 &4
@@ -216,6 +217,11 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 114285194632179770, guid: 134c3d7ad423ae840acb9de2a7eb8dee,
+        type: 2}
+      propertyPath: _obstaclesColliders.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4013506927610492, guid: 134c3d7ad423ae840acb9de2a7eb8dee, type: 2}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -261,6 +267,29 @@ Prefab:
     - target: {fileID: 114285194632179770, guid: 134c3d7ad423ae840acb9de2a7eb8dee,
         type: 2}
       propertyPath: _obstacleCollider
+      value: 
+      objectReference: {fileID: 1482219766}
+    - target: {fileID: 114285194632179770, guid: 134c3d7ad423ae840acb9de2a7eb8dee,
+        type: 2}
+      propertyPath: _agentScript
+      value: 
+      objectReference: {fileID: 114000011849109640, guid: 600f0b9d2e6f00a4a8d62a01fb36a2af,
+        type: 2}
+    - target: {fileID: 114285194632179770, guid: 134c3d7ad423ae840acb9de2a7eb8dee,
+        type: 2}
+      propertyPath: _auxinScript
+      value: 
+      objectReference: {fileID: 114037783865560150, guid: 76db8422eb88e224f9999ee42c7724cd,
+        type: 2}
+    - target: {fileID: 114285194632179770, guid: 134c3d7ad423ae840acb9de2a7eb8dee,
+        type: 2}
+      propertyPath: _cellScript
+      value: 
+      objectReference: {fileID: 114240077233781082, guid: df4b3d764c5cc9f4fbbda5634f7ea033,
+        type: 2}
+    - target: {fileID: 114285194632179770, guid: 134c3d7ad423ae840acb9de2a7eb8dee,
+        type: 2}
+      propertyPath: _obstaclesColliders.Array.data[0]
       value: 
       objectReference: {fileID: 1482219766}
     m_RemovedComponents: []
@@ -339,7 +368,6 @@ AudioListener:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1648599570}
   m_Enabled: 1
-  m_ExtensionPropertyValues: []
 --- !u!124 &1648599572
 Behaviour:
   m_ObjectHideFlags: 0
@@ -389,7 +417,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
-  m_StereoMirrorMode: 0
 --- !u!4 &1648599575
 Transform:
   m_ObjectHideFlags: 0
@@ -397,7 +424,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1648599570}
   m_LocalRotation: {x: 0.53641766, y: -0, z: -0, w: 0.8439527}
-  m_LocalPosition: {x: 15.49, y: 43.081, z: -9.947}
+  m_LocalPosition: {x: 15.49, y: 18.64, z: 1.51}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

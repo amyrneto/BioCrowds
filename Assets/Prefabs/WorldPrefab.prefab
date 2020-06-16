@@ -52,13 +52,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _terrain: {fileID: 0}
-  _goal: {fileID: 0}
+  _goals:
+  - {fileID: 0}
   _dimension: {x: 30, y: 20}
   _maxAgents: 60
-  _agentPrefab: {fileID: 114000011849109640, guid: 600f0b9d2e6f00a4a8d62a01fb36a2af,
+  _agentScript: {fileID: 114000011849109640, guid: 600f0b9d2e6f00a4a8d62a01fb36a2af,
     type: 2}
-  _cellPrefab: {fileID: 114240077233781082, guid: df4b3d764c5cc9f4fbbda5634f7ea033,
+  _cellScript: {fileID: 114240077233781082, guid: df4b3d764c5cc9f4fbbda5634f7ea033,
     type: 2}
-  _auxinPrefab: {fileID: 114037783865560150, guid: 76db8422eb88e224f9999ee42c7724cd,
+  _auxinScript: {fileID: 114037783865560150, guid: 76db8422eb88e224f9999ee42c7724cd,
     type: 2}
-  _obstacleCollider: {fileID: 0}
+  _obstaclesColliders:
+  - {fileID: 0}
