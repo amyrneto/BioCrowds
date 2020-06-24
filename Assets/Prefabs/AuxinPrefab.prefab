@@ -51,6 +51,7 @@ MeshRenderer:
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -66,6 +67,7 @@ MeshRenderer:
   m_PreserveUVs: 1
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
+  m_StitchLightmapSeams: 0
   m_SelectedEditorRenderState: 3
   m_MinimumChartSize: 4
   m_AutoUVMaxDistance: 0.5
@@ -92,3 +94,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1cd79b8cfdc9b14c8d5a9405b6a90da, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsTaken: 0
+  MinDistanceToAgent: 1000
+  Agent: {fileID: 0}
+  Cell: {fileID: 0}

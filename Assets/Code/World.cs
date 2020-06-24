@@ -13,281 +13,348 @@ using UnityEngine.AI;
 
 namespace Biocrowds.Core
 {
-    public class World : MonoBehaviour
-    {
-        //agent radius
-        private const float AGENT_RADIUS = 1.0f;
+	public class World : MonoBehaviour
+	{
+		//agent radius
+		private const float AGENT_RADIUS = 3.0f;
 
-        //radius for auxin collide
-        private const float AUXIN_RADIUS = 0.1f;
+		//radius for auxin collide
+		private const float AUXIN_RADIUS = 0.1f;
 
-        //density
-        private const float AUXIN_DENSITY = 0.45f; //0.65f;
+		//density
+		private const float AUXIN_DENSITY = 0.45f; //0.65f;
 
-        [SerializeField]
-        private Terrain _terrain;
+		//social distancing
+		private const float SOCIAL_DISTANCING = 2.0f;
 
-        [SerializeField]
-        private Transform [] _goals;
+		[SerializeField]
+		private Terrain _terrain;
 
-        [SerializeField]
-        private Vector2 _dimension = new Vector2(30.0f, 20.0f);
-        public Vector2 Dimension
-        {
-            get { return _dimension; }
-        }
+		[SerializeField]
+		private GameObject[] _goals;
 
-        //number of agents in the scene
-        [SerializeField]
-        private int _maxAgents = 30;
+		[SerializeField]
+		private Vector2 _dimension = new Vector2(30.0f, 20.0f);
+		public Vector2 Dimension {
+			get { return _dimension; }
+		}
 
-        //agent prefab
-        [SerializeField]
-        private Agent _agentScript;
+		//number of agents in the scene
+		[SerializeField]
+		private int _maxAgents = 30;
 
-        [SerializeField]
-        private Cell _cellScript;
+		//agent prefab
+		[SerializeField]
+		private Agent _agentPrefab;
 
-        [SerializeField]
-        private Auxin _auxinScript;
+		[SerializeField]
+		private Cell _cellPrefab;
+		public float CellWidth {
+			get { return _cellPrefab.transform.localScale.x; }
+		}
+		public float CellHeight {
+			get { return _cellPrefab.transform.localScale.y; }
+		}
+		public float CellLength {
+			get { return _cellPrefab.transform.localScale.z; }
+		}
 
-        [SerializeField]
-        private BoxCollider [] _obstaclesColliders;
+		[SerializeField]
+		private Auxin _auxinPrefab;
 
-        private List<Agent> _agents = new List<Agent>();
-		private List<Cell> _cells = new List<Cell>();
+		[SerializeField]
+		private BoxCollider[] _obstaclesColliders;
 
-        public List<Cell> Cells
-        {
-            get { return _cells; }
-        }
+		private List<Agent> _agents = new List<Agent>();
+		public List<Agent> Agents {
+			get { return _agents; }
+		}
 
-        //max auxins on the ground
-        private int _maxAuxins;
-        private bool _isReady;
+		[SerializeField]
+		public List<Cell> _cells = new List<Cell>();
+		public List<Cell> Cells {
+			get { return _cells; }
+		}
+		private int _cellsInEachRow = -1;
+		public int CellsInEachRow {
+			get { return SetCellsInEachRow(); }
+		}
 
-        // Use this for initialization
-        IEnumerator Start()
-        {
-            //Application.runInBackground = true;
 
-            //change terrain size according informed
-            _terrain.terrainData.size = new Vector3(_dimension.x, _terrain.terrainData.size.y, _dimension.y);
+		//max auxins on the ground
+		private int _maxAuxins;
+		private bool _isReady;
 
-            //create all cells based on dimension
-            yield return StartCoroutine(CreateCells());
+		// Use this for initialization
+		IEnumerator Start()
+		{
+			//Application.runInBackground = true;
 
-            //populate cells with auxins
-            yield return StartCoroutine(DartThrowing());
+			//change terrain size according informed
+			_terrain.terrainData.size = new Vector3(_dimension.x, _terrain.terrainData.size.y, _dimension.y);
 
-            //create our agents
-            yield return StartCoroutine(CreateAgents());
+			// Set Goals
+			_goals = GameObject.FindGameObjectsWithTag("Goal");
 
-            //build the navmesh at runtime
-            //NavMeshBuilder.BuildNavMesh();
+			//create all cells based on dimension
+			yield return StartCoroutine(CreateCells());
 
-            //wait a little bit to start moving
-            yield return new WaitForSeconds(1.0f);
-            _isReady = true;
-        }
+			//populate cells with auxins
+			yield return StartCoroutine(DartThrowing());
 
-        private IEnumerator CreateCells()
-        {
-            Transform cellPool = new GameObject("Cells").transform;
+			//create our agents
+			yield return StartCoroutine(CreateAgents());
 
-            for (int i = 0; i < _dimension.x / 2; i++) //i + agentRadius * 2
-            {
-                for (int j = 0; j < _dimension.y / 2; j++) // j + agentRadius * 2
-                {
-                    //instantiante a new cell
-                    Cell newCell = Instantiate(_cellScript, new Vector3(1.0f + (i * 2.0f), 0.0f, 1.0f + (j * 2.0f)), Quaternion.Euler(90.0f, 0.0f, 0.0f), cellPool);
+			//build the navmesh at runtime
+			//NavMeshBuilder.BuildNavMesh();
 
-                    //change its name
-                    newCell.name = "Cell [" + i + "][" + j + "]";
+			//wait a little bit to start moving
+			yield return new WaitForSeconds(1.0f);
+			_isReady = true;
+		}
 
-                    //metadata for optimization
-                    newCell.X = i;
-                    newCell.Z = j;
+		private IEnumerator CreateCells()
+		{
+			Transform cellPool = new GameObject("Cells").transform;
+			Vector3 cellDimension = _cellPrefab.transform.localScale;
+			float offset = 1.0f;
+			//Debug.Log(CellsInEachRow);
+			for (int i = 0; i < _dimension.y / cellDimension.z; i++) //i + agentRadius * 2
+			{
+				for (int j = 0; j < _dimension.x / cellDimension.x; j++) // j + agentRadius * 2
+				{
+					//instantiante a new cell
+					Vector3 pos = new Vector3(offset + (j * cellDimension.z), 0.0f, offset + (i * cellDimension.x));
 
-                    _cells.Add(newCell);
+					Cell newCell = Instantiate(_cellPrefab, pos, Quaternion.Euler(90.0f, 0.0f, 0.0f), cellPool);
 
-                    yield return null;
-                }
-            }
-        }
+					//metadata for optimization
+					newCell.name = "Cell [" + i + "][" + j + "]";
+					newCell.X = i;
+					newCell.Z = j;
+					newCell.scale = cellDimension;
 
-        private IEnumerator DartThrowing()
-        {
-            //lets set the qntAuxins for each cell according the density estimation
-            float densityToQnt = AUXIN_DENSITY;
+					_cells.Add(newCell);
+					yield return null;
+				}
+			}
+		}
 
-            Transform auxinPool = new GameObject("Auxins").transform;
+		private IEnumerator DartThrowing()
+		{
+			//lets set the qntAuxins for each cell according the density estimation
 
-            densityToQnt *= 2f / (2.0f * AUXIN_RADIUS);
-            densityToQnt *= 2f / (2.0f * AUXIN_RADIUS);
+			Transform auxinPool = new GameObject("Auxins").transform;
 
-            _maxAuxins = (int)Mathf.Floor(densityToQnt);
+			float densityToQnt = AUXIN_DENSITY / (AUXIN_RADIUS * AUXIN_RADIUS);
+			//Debug.Log(densityToQnt);
 
-            //for each cell, we generate its auxins
-            for (int c = 0; c < _cells.Count; c++)
-            {
-                //Dart throwing auxins
-                //use this flag to break the loop if it is taking too long (maybe there is no more space)
-                int flag = 0;
-                for (int i = 0; i < _maxAuxins; i++)
-                {
-                    float x = Random.Range(_cells[c].transform.position.x - 0.99f, _cells[c].transform.position.x + 0.99f);
-                    float z = Random.Range(_cells[c].transform.position.z - 0.99f, _cells[c].transform.position.z + 0.99f);
+			_maxAuxins = (int)Mathf.Floor(densityToQnt);
+			float offset = (CellWidth - AUXIN_RADIUS) / 2;
+			//Debug.Log(offset);
 
-                    //see if there are auxins in this radius. if not, instantiante
-                    List<Auxin> allAuxinsInCell = _cells[c].Auxins;
-                    bool createAuxin = true;
-                    for (int j = 0; j < allAuxinsInCell.Count; j++)
-                    {
-                        float distanceAASqr = (new Vector3(x, 0f, z) - allAuxinsInCell[j].Position).sqrMagnitude;
+			//for each cell, we generate its auxins
+			for (int c = 0; c < _cells.Count; c++)
+			{
+				//Dart throwing auxins
+				//use this flag to break the loop if it is taking too long (maybe there is no more space)
+				int flag = 0;
+				for (int i = 0; i < _maxAuxins; i++)
+				{
+					float x = Random.Range(_cells[c].transform.position.x - offset, _cells[c].transform.position.x + offset);
+					float z = Random.Range(_cells[c].transform.position.z - offset, _cells[c].transform.position.z + offset);
 
-                        //if it is too near no need to add another
-                        if (distanceAASqr < AUXIN_RADIUS * AUXIN_RADIUS)
-                        {
-                            createAuxin = false;
-                            break;
-                        }
-                    }
+					//see if there are auxins in this radius. if not, instantiante
+					List<Auxin> allAuxinsInCell = _cells[c].Auxins;
+					bool createAuxin = true;
+					for (int j = 0; j < allAuxinsInCell.Count; j++)
+					{
+						float distanceAASqr = (new Vector3(x, 0f, z) - allAuxinsInCell[j].Position).sqrMagnitude;
 
-                    //if i have found no auxin, i still need to check if is there obstacles on the way
-                    if (createAuxin)
-                    {
-                        //sphere collider to try to find the obstacles
-                        //NavMeshHit hit;
-                        //createAuxin = NavMesh.Raycast(new Vector3(x, 2f, z), new Vector3(x, -2f, z), out hit, 1 << NavMesh.GetAreaFromName("Walkable")); //NavMesh.GetAreaFromName("Walkable")); // NavMesh.AllAreas);
-                        //createAuxin = NavMesh.SamplePosition(new Vector3(x, 0.0f, z), out hit, 0.1f, 1 << NavMesh.GetAreaFromName("Walkable"));
-                        //bool isBlocked = _obstacleCollider.bounds.Contains(new Vector3(x, 0.0f, z));
-                        Collider[] hitColliders = Physics.OverlapSphere(new Vector3(x, 0f, z), AUXIN_RADIUS + 0.1f, 1 << LayerMask.NameToLayer("Obstacle"));
-                        createAuxin = (hitColliders.Length == 0);
-                    }
+						//if it is too near no need to add another
+						if (distanceAASqr < AUXIN_RADIUS * AUXIN_RADIUS)
+						{
+							createAuxin = false;
+							break;
+						}
+					}
 
-                    //check if auxin can be created there
-                    if (createAuxin)
-                    {
-                        Auxin newAuxin = Instantiate(_auxinScript, new Vector3(x, 0.0f, z), Quaternion.identity, auxinPool);
+					//if i have found no auxin, i still need to check if is there obstacles on the way
+					if (createAuxin)
+					{
+						//sphere collider to try to find the obstacles
+						//NavMeshHit hit;
+						//createAuxin = NavMesh.Raycast(new Vector3(x, 2f, z), new Vector3(x, -2f, z), out hit, 1 << NavMesh.GetAreaFromName("Walkable")); //NavMesh.GetAreaFromName("Walkable")); // NavMesh.AllAreas);
+						//createAuxin = NavMesh.SamplePosition(new Vector3(x, 0.0f, z), out hit, 0.1f, 1 << NavMesh.GetAreaFromName("Walkable"));
+						//bool isBlocked = _obstacleCollider.bounds.Contains(new Vector3(x, 0.0f, z));
+						Collider[] hitColliders = Physics.OverlapSphere(new Vector3(x, 0f, z), AUXIN_RADIUS + 0.1f, 1 << LayerMask.NameToLayer("Obstacle"));
+						createAuxin = (hitColliders.Length == 0);
+					}
 
-                        //change its name
-                        newAuxin.name = "Auxin [" + c + "][" + i + "]";
-                        //this auxin is from this cell
-                        newAuxin.Cell = _cells[c];
-                        //set position
-                        newAuxin.Position = new Vector3(x, 0f, z);
+					//check if auxin can be created there
+					if (createAuxin)
+					{
+						Auxin newAuxin = Instantiate(_auxinPrefab, new Vector3(x, 0.0f, z), Quaternion.identity, auxinPool);
 
-                        //add this auxin to this cell
-                        _cells[c].Auxins.Add(newAuxin);
+						//change its name
+						newAuxin.name = "Auxin [" + c + "][" + i + "]";
+						//this auxin is from this cell
+						newAuxin.Cell = _cells[c];
+						//set position
+						newAuxin.Position = new Vector3(x, 0f, z);
 
-                        //reset the flag
-                        flag = 0;
+						//add this auxin to this cell
+						_cells[c].Auxins.Add(newAuxin);
 
-                        //speed up the demonstration a little bit...
-                        if (i % 200 == 0)
-                            yield return null;
-                    }
-                    else
-                    {
-                        //else, try again
-                        flag++;
-                        i--;
-                    }
+						//reset the flag
+						flag = 0;
 
-                    //if flag is above qntAuxins (*2 to have some more), break;
-                    if (flag > _maxAuxins * 2)
-                    {
-                        //reset the flag
-                        flag = 0;
-                        break;
-                    }
-                }
-            }
-        }
+						//speed up the demonstration a little bit...
+						if (i % 200 == 0)
+							yield return null;
+					}
+					else
+					{
+						//else, try again
+						flag++;
+						i--;
+					}
 
-        private IEnumerator CreateAgents()
-        {
-            Transform agentPool = new GameObject("Agents").transform;
-            const float initialXPos = 1.0f;
-            const float initialZPos = 1.0f;
+					//if flag is above qntAuxins (*2 to have some more), break;
+					if (flag > _maxAuxins * 2)
+					{
+						//reset the flag
+						flag = 0;
+						break;
+					}
+				}
+			}
+		}
 
-            float xPos = initialXPos;
-            float zPos = initialZPos;
+		private IEnumerator CreateAgents()
+		{
+			Transform agentPool = new GameObject("Agents").transform;
+			const float initialXPos = 1.0f;
+			const float initialZPos = 1.0f;
 
-            //instantiate agents
-            for (int i = 0; i < _maxAgents; i++)
-            {
-                Agent newAgent = Instantiate(_agentScript, new Vector3(xPos, 0.5f, zPos), Quaternion.identity, agentPool);
+			float xPos = initialXPos;
+			float zPos = initialZPos;
 
-                newAgent.name = "Agent [" + i + "]";  //name
-                newAgent.CurrentCell = _cells[i];  //agent cell
-                newAgent.agentRadius = AGENT_RADIUS;  //agent radius
-				int goalIndex = Random.Range(0, _goals.Length - 1);
-                newAgent.Goal = _goals[goalIndex];  //agent goal
-                newAgent.World = this;
+			//instantiate agents
+			for (int i = 0; i < _maxAgents; i++)
+			{
+				Agent newAgent = Instantiate(_agentPrefab, new Vector3(xPos, 0.5f, zPos), Quaternion.identity, agentPool);
 
-                _agents.Add(newAgent);
+				newAgent.name = "Agent [" + i + "]";  //name
+				newAgent.CurrentCell = _cells[i];  //agent cell
+				newAgent.AgentRadius = AGENT_RADIUS;  //agent radius
+				newAgent.Goal = GetNewGoal();  //agent goal
+				newAgent.World = this;
+				newAgent.DistancingRadius = SOCIAL_DISTANCING;
 
-                xPos += 1.0f;
-                if (xPos > _dimension.x)
-                {
-                    xPos = initialXPos;
-                    zPos += 1.0f;
-                }
 
-                yield return null;
-            }
-        }
+				_agents.Add(newAgent);
 
-        // Update is called once per frame
-        void Update()
-        {
-            if (!_isReady)
-                return;
+				xPos += 1.0f;
+				if (xPos >= _dimension.x)
+				{
+					xPos = initialXPos;
+					zPos += 1.0f;
+				}
 
-            //reset auxins
-            for (int i = 0; i < _cells.Count; i++)
-                for (int j = 0; j < _cells[i].Auxins.Count; j++)
-                    _cells[i].Auxins[j].ResetAuxin();
+				yield return null;
+			}
+		}
 
-            //find nearest auxins for each agent
-            for (int i = 0; i < _agents.Count; i++)
-                _agents[i].FindNearAuxins();
+		// Update is called once per frame
+		void Update()
+		{
+			if (!_isReady)
+				return;
 
-            /*
-             * to find where the agent must move, we need to get the vectors from the agent to each auxin he has, and compare with 
-             * the vector from agent to goal, generating a angle which must lie between 0 (best case) and 180 (worst case)
-             * The calculation formula was taken from the Bicho´s master thesis and from Paravisi OSG implementation.
-            */
-            /*for each agent:
-            1 - for each auxin near him, find the distance vector between it and the agent
-            2 - calculate the movement vector 
-            3 - calculate speed vector 
-            4 - step
-            */
-            for (int i = 0; i < _maxAgents; i++)
-            {
-                //find the agent
-                List<Auxin> agentAuxins = _agents[i].Auxins;
+			ResetAuxins();
 
-                //vector for each auxin
-                for (int j = 0; j < agentAuxins.Count; j++)
-                {
-                    //add the distance vector between it and the agent
-                    _agents[i]._distAuxin.Add(agentAuxins[j].Position - _agents[i].transform.position);
 
-                    //just draw the lines to each auxin
-                    Debug.DrawLine(agentAuxins[j].Position, _agents[i].transform.position, Color.green);
-                }
+			/*
+			 * to find where the agent must move, we need to get the vectors from the agent to each auxin he has, and compare with 
+			 * the vector from agent to goal, generating an angle which must lie between 0 (best case) and 180 (worst case)
+			 * The calculation formula was taken from the Bicho´s master thesis and from Paravisi OSG implementation.
+			*/
+			/*for each agent:
+			1 - for each auxin near him, find the distance vector between it and the agent
+			2 - calculate the movement vector 
+			3 - calculate speed vector 
+			4 - step
+			*/
+			foreach(Agent agent in _agents)
+				agent.FindAuxinsInRange();
 
-                //calculate the movement vector
-                _agents[i].CalculateDirection();
-                //calculate speed vector
-                _agents[i].CalculateVelocity();
-                //step
-                _agents[i].Step();
-            }
-        }
-    }
+			for (int i = 0; i < _maxAgents; i++)
+			{
+				//calculate the movement vector
+				_agents[i].CalculateDirection();
+				//calculate speed vector
+				_agents[i].CalculateVelocity();
+				//step
+				_agents[i].Step();
+			}
+		}
+
+		public void ResetAuxins()
+		{
+			for (int i = 0; i < _cells.Count; i++)
+				_cells[i].ResetAuxins();
+		}
+
+		public List<Cell> GetCells(Vector3 position, int ray)
+		{
+			int raySqr = ray * ray;
+
+			List<Cell> neighbouringCells = new List<Cell>();
+			Cell c = _cells[0];
+			int currentX = Mathf.FloorToInt(position.x / c.scale.x);
+			int currentZ = Mathf.FloorToInt(position.z / c.scale.z);
+			int currentCell = GetCellIndex(currentX, currentZ);
+			neighbouringCells.Add(_cells[currentCell]);
+
+			foreach (Cell cell in _cells)
+			{
+				if (cell == _cells[currentCell])
+				{
+					//_cells[currentCell].HighlightCell();
+					continue;
+				}
+				if (_cells[currentCell].InRange(cell, raySqr))
+				{
+					neighbouringCells.Add(cell);
+				}
+			}
+
+			return neighbouringCells;
+		}
+
+
+		public int GetCellIndex(int X, int Z)
+		{
+			int index = Z * CellsInEachRow + X;
+			return index;
+		}
+
+		public Transform GetNewGoal()
+		{
+			int goalIndex = Random.Range(0, _goals.Length);
+			//Debug.Log(goalIndex);
+			return _goals[goalIndex].transform;  //agent goal
+		}
+
+		private int SetCellsInEachRow()
+		{
+			if (_cellsInEachRow == -1)
+			{ // Not initialized
+			  // chache it
+				_cellsInEachRow = Mathf.FloorToInt(_dimension.x / _cellPrefab.transform.localScale.x);
+			}
+			return _cellsInEachRow;
+		}
+	}
 }
